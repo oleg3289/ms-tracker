@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 60 // seconds
 
+// Allow up to 10 MB – Vercel's default for App Router is 4.5 MB which can
+// be too small for image-heavy workout PDFs uploaded over slow mobile connections.
+export const runtime = 'nodejs'
+
 // Convert exercise name → muscleandstrength.com guide slug
 // "Barbell Bench Press" → "barbell-bench-press"
 // "Calf Exercise (choose any exercise)" → "calf-exercise"
@@ -34,7 +38,11 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
 
-    if (!file || file.type !== 'application/pdf') {
+    const isPdf =
+      file?.type === 'application/pdf' ||
+      file?.type === 'application/octet-stream' || // iOS sometimes reports this
+      file?.name?.toLowerCase().endsWith('.pdf')
+    if (!file || !isPdf) {
       return NextResponse.json({ error: 'Please upload a valid PDF file' }, { status: 400 })
     }
 
