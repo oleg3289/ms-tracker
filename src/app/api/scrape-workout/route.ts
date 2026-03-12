@@ -11,15 +11,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please provide a valid muscleandstrength.com URL' }, { status: 400 })
     }
 
-    const res = await fetch(url, {
+    // Strip tracking/analytics params that can trigger Cloudflare challenges
+    let cleanUrl: string
+    try {
+      const parsed = new URL(url)
+      for (const key of [...parsed.searchParams.keys()]) {
+        if (key.startsWith('_') || key.startsWith('utm_') || key === 'fbclid') {
+          parsed.searchParams.delete(key)
+        }
+      }
+      cleanUrl = parsed.toString()
+    } catch {
+      cleanUrl = url
+    }
+
+    const res = await fetch(cleanUrl, {
+      redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
     })
 
     if (!res.ok) {
-      return NextResponse.json({ error: `Failed to fetch page (${res.status})` }, { status: 502 })
+      const hint = res.status === 403
+        ? 'The site blocked the import request. Try downloading the page as a PDF (File → Print → Save as PDF) and use the PDF import option instead.'
+        : `Failed to fetch page (${res.status})`
+      return NextResponse.json({ error: hint }, { status: 502 })
     }
 
     const html = await res.text()
