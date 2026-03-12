@@ -10,13 +10,15 @@ export default async function DashboardPage() {
 
   const today = toDateString(new Date())
 
-  // Get active plan
+  // Get active plan (most recently activated; only one should be active at a time)
   const { data: activePlan } = await supabase
     .from('workout_plans')
     .select('*, workout_programs(*)')
     .eq('user_id', user!.id)
     .eq('active', true)
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   // Get today's session
   const { data: todaySession } = await supabase

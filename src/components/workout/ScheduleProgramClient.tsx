@@ -47,6 +47,13 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
       const start = new Date(startDate)
       const endDate = toDateString(addDays(start, durationWeeks * 7))
 
+      // Deactivate any existing active plans first (only one can be active at a time)
+      await supabase
+        .from('workout_plans')
+        .update({ active: false })
+        .eq('user_id', user.id)
+        .eq('active', true)
+
       const { data: plan, error: pe } = await supabase.from('workout_plans').insert({
         user_id: user.id,
         program_id: programId,
