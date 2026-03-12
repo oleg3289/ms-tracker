@@ -43,6 +43,7 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
   const [syncing, setSyncing] = useState(false)
   const [syncDone, setSyncDone] = useState(false)
   const [reminderMinutes, setReminderMinutes] = useState(60)
+  const [workoutTime, setWorkoutTime] = useState('07:00')
 
   // Mid-program state
   const [midProgram, setMidProgram] = useState(false)
@@ -59,7 +60,12 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
       const calRes = await fetch('/api/calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, reminderMinutes }),
+        body: JSON.stringify({
+          planId,
+          reminderMinutes,
+          workoutTime,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       })
       if (!calRes.ok) {
         const d = await calRes.json()
@@ -198,7 +204,12 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
         const calRes = await fetch('/api/calendar/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: plan.id, reminderMinutes }),
+          body: JSON.stringify({
+            planId: plan.id,
+            reminderMinutes,
+            workoutTime,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
         })
         if (!calRes.ok) {
           setConflict('Calendar sync failed — workouts are saved but not in your calendar yet.')
@@ -355,7 +366,20 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
         </label>
 
         {syncCalendar && (
-          <div className="space-y-1.5 pl-1">
+          <div className="space-y-3 pl-1">
+            {/* Workout time */}
+            <div className="space-y-1.5">
+              <p className="text-xs text-slate-500">Workout time</p>
+              <input
+                type="time"
+                value={workoutTime}
+                onChange={e => setWorkoutTime(e.target.value)}
+                className="bg-[#0d0d1a] border border-[#1e2035] rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
+              />
+            </div>
+
+            {/* Reminder */}
+            <div className="space-y-1.5">
             <p className="text-xs text-slate-500">Remind me before each workout</p>
             <div className="flex flex-wrap gap-2">
               {[
@@ -379,6 +403,7 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
                   {opt.label}
                 </button>
               ))}
+            </div>
             </div>
           </div>
         )}

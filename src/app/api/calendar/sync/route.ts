@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { planId, reminderMinutes } = await req.json()
+    const { planId, reminderMinutes, workoutTime, timezone } = await req.json()
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -55,13 +55,32 @@ export async function POST(req: NextRequest) {
         .map((e: any) => e.name)
         .slice(0, 5)
 
+      // Build start/end: timed event if workoutTime provided, all-day otherwise
+      let eventStart: Record<string, string>
+      let eventEnd: Record<string, string>
+      if (workoutTime && timezone) {
+        const tz = timezone as string
+        const endTime = (() => {
+          const [h, m] = (workoutTime as string).split(':').map(Number)
+          const totalMins = h * 60 + m + 60 // +1 hour
+          const eh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0')
+          const em = String(totalMins % 60).padStart(2, '0')
+          return `${eh}:${em}`
+        })()
+        eventStart = { dateTime: `${date}T${workoutTime}:00`, timeZone: tz }
+        eventEnd   = { dateTime: `${date}T${endTime}:00`,    timeZone: tz }
+      } else {
+        eventStart = { date }
+        eventEnd   = { date }
+      }
+
       const event = {
         summary: `💪 ${label}`,
         description: exercises.length > 0
           ? `Exercises:\n${exercises.map((e: string) => `• ${e}`).join('\n')}`
           : 'Workout session',
-        start: { date },
-        end: { date },
+        start: eventStart,
+        end: eventEnd,
         colorId: '6', // tangerine / orange
         reminders: {
           useDefault: false,
