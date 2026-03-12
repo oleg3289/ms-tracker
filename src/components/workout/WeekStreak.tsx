@@ -16,7 +16,7 @@ export function WeekStreak({ sessions }: Props) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
-    const dateStr = d.toISOString().split('T')[0]
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
     const session = sessions.find(s => s.scheduled_date === dateStr)
     const isToday = d.toDateString() === today.toDateString()
     const isPast = d < today && !isToday
