@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkoutTracker – Setup Guide</title>
+<style>
+  :root { --brand: #f97316; --bg: #0a0a0f; --surface: #13131f; --surface2: #1a1a2e; --border: #1e2035; --text: #e2e8f0; --sub: #94a3b8; --muted: #64748b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+  .container { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; }
+  .hero { text-align: center; margin-bottom: 56px; }
+  .logo { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, #f97316, #ea580c); margin-bottom: 20px; box-shadow: 0 12px 40px rgba(249,115,22,0.3); font-size: 32px; }
+  h1 { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .hero p { color: var(--sub); font-size: 16px; }
+  .badge { display: inline-block; background: var(--brand); color: white; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .steps { display: grid; gap: 24px; }
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .step-header { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .step-num { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--brand), #ea580c); color: white; font-weight: 800; font-size: 15px; flex-shrink: 0; }
+  .step-header h2 { font-size: 17px; font-weight: 700; color: #fff; }
+  .step-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .step-body { padding: 20px 24px; }
+  .substep { margin-bottom: 20px; }
+  .substep:last-child { margin-bottom: 0; }
+  .substep h3 { font-size: 13px; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  pre { background: #0d0d1a; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #a5f3fc; overflow-x: auto; font-family: 'Fira Code', 'Cascadia Code', monospace; white-space: pre-wrap; }
+  .env-key { color: #86efac; }
+  .env-val { color: #fde68a; }
+  .note { background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #fdba74; margin-top: 12px; }
+  .note strong { color: var(--brand); }
+  .tip { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #a5b4fc; margin-top: 12px; }
+  .warning { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #fca5a5; margin-top: 12px; }
+  ul { padding-left: 20px; space-y: 4px; }
+  ul li { font-size: 14px; color: var(--sub); margin-bottom: 6px; }
+  ul li strong { color: var(--text); }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); color: var(--sub); font-size: 11px; padding: 2px 8px; border-radius: 6px; font-family: monospace; }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .check { color: #34d399; margin-right: 6px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .final { text-align: center; padding: 40px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+  .final h2 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .final p { color: var(--sub); }
+  .url-box { background: #0d0d1a; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-family: monospace; font-size: 14px; color: #86efac; display: inline-block; margin-top: 12px; }
+  .img-placeholder { background: var(--surface2); border: 1px dashed var(--border); border-radius: 10px; padding: 20px; text-align: center; color: var(--muted); font-size: 13px; margin-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid #0d0d1a; color: var(--sub); vertical-align: top; }
+  td:first-child { color: var(--text); font-weight: 500; font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <div class="logo">💪</div>
+    <div class="badge">Setup Guide</div>
+    <h1>WorkoutTracker PWA</h1>
+    <p>Google SSO · Google Calendar · Workout Import · Progress Tracking</p>
+  </div>
+
+  <div class="steps">
+
+    <!-- STEP 1: SUPABASE PROJECT -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div>
+          <h2>Create a Supabase Project</h2>
+          <p>Set up your database and authentication</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>1.1 — Create project</h3>
+          <ul>
+            <li>Go to <a href="https://supabase.com" target="_blank">supabase.com</a> → <strong>New Project</strong></li>
+            <li>Choose a name (e.g. <strong>workout-tracker</strong>), region, and strong password</li>
+            <li>Wait ~2 minutes for it to initialize</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>1.2 — Get your API keys</h3>
+          <ul>
+            <li>Go to <strong>Project Settings → API</strong></li>
+            <li>Copy <strong>Project URL</strong> and <strong>anon (public) key</strong></li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>1.3 — Run the database migration</h3>
+          <ul>
+            <li>Go to <strong>SQL Editor</strong> in your Supabase project</li>
+            <li>Open the file <span class="tag">supabase/migrations/001_workout_schema.sql</span> from this project</li>
+            <li>Paste the entire contents into the SQL editor and click <strong>Run</strong></li>
+          </ul>
+          <div class="note"><strong>Note:</strong> This creates all tables (programs, days, exercises, sessions, logs) and sets up Row Level Security so users only see their own data.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: GOOGLE OAUTH -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div>
+          <h2>Set Up Google OAuth</h2>
+          <p>Enable Google Sign-In + Calendar access</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>2.1 — Google Cloud Console</h3>
+          <ul>
+            <li>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></li>
+            <li>Create a new project (or select existing)</li>
+            <li>Go to <strong>APIs &amp; Services → Enable APIs</strong></li>
+            <li>Enable: <strong>Google Calendar API</strong> and <strong>People API</strong></li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>2.2 — Create OAuth Credentials</h3>
+          <ul>
+            <li>Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth Client ID</strong></li>
+            <li>Application type: <strong>Web application</strong></li>
+            <li>Add Authorized JavaScript origin:<br>
+              <span class="tag">https://your-project-ref.supabase.co</span>
+            </li>
+            <li>Add Authorized redirect URIs:<br>
+              <span class="tag">https://your-project-ref.supabase.co/auth/v1/callback</span>
+            </li>
+            <li>Copy <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+          </ul>
+          <div class="note"><strong>Replace</strong> <code>your-project-ref</code> with your actual Supabase project reference ID (visible in Project Settings → General).</div>
+        </div>
+        <div class="substep">
+          <h3>2.3 — Configure Supabase Auth</h3>
+          <ul>
+            <li>In Supabase: go to <strong>Authentication → Providers → Google</strong></li>
+            <li>Toggle <strong>Enable</strong></li>
+            <li>Paste your <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+            <li>Save</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>2.4 — OAuth Consent Screen</h3>
+          <ul>
+            <li>In Google Cloud Console → <strong>OAuth consent screen</strong></li>
+            <li>User type: <strong>External</strong> → Create</li>
+            <li>Add App name, support email, developer email</li>
+            <li>Add scopes: <span class="tag">email</span>, <span class="tag">profile</span>, <span class="tag">https://www.googleapis.com/auth/calendar</span></li>
+            <li>Add yourself as a test user (during development)</li>
+          </ul>
+          <div class="warning"><strong>Important:</strong> While your app is in "Testing" mode, only users added as test users can sign in. To open it to everyone, you'll need to submit for Google verification.</div>
+        </div>
+        <div class="substep">
+          <h3>2.5 — Add Redirect URL in Supabase</h3>
+          <ul>
+            <li>In Supabase: <strong>Authentication → URL Configuration</strong></li>
+            <li>Site URL: <span class="tag">http://localhost:3000</span> (or your production URL)</li>
+            <li>Add redirect URL: <span class="tag">http://localhost:3000/auth/callback</span></li>
+            <li>For production, also add: <span class="tag">https://yourdomain.com/auth/callback</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: ENV VARS -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div>
+          <h2>Configure Environment Variables</h2>
+          <p>Create your <code>.env.local</code> file</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>Create .env.local in project root</h3>
+          <pre><span class="env-key">NEXT_PUBLIC_SUPABASE_URL</span>=<span class="env-val">https://xxxxxxxxxxxxx.supabase.co</span>
+<span class="env-key">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>=<span class="env-val">eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp...</span>
+<span class="env-key">NEXT_PUBLIC_APP_URL</span>=<span class="env-val">http://localhost:3000</span></pre>
+          <div class="note"><strong>Note:</strong> Google Client ID &amp; Secret are NOT needed here — they are configured directly in Supabase Auth settings. Supabase handles the OAuth flow for you.</div>
+        </div>
+        <div class="substep">
+          <h3>Environment variables explained</h3>
+          <table>
+            <tr><th>Variable</th><th>Where to find it</th></tr>
+            <tr><td>NEXT_PUBLIC_SUPABASE_URL</td><td>Supabase → Project Settings → API → Project URL</td></tr>
+            <tr><td>NEXT_PUBLIC_SUPABASE_ANON_KEY</td><td>Supabase → Project Settings → API → anon (public) key</td></tr>
+            <tr><td>NEXT_PUBLIC_APP_URL</td><td>Your app URL (localhost:3000 for dev)</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: INSTALL & RUN -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div>
+          <h2>Install &amp; Run</h2>
+          <p>Get the app running locally</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>4.1 — Install dependencies</h3>
+          <pre>cd workout-pwa
+npm install</pre>
+        </div>
+        <div class="substep">
+          <h3>4.2 — Start the development server</h3>
+          <pre>npm run dev</pre>
+          <p style="font-size:13px;color:var(--sub);margin-top:8px;">Open <a href="http://localhost:3000">http://localhost:3000</a> in your browser</p>
+        </div>
+        <div class="substep">
+          <h3>4.3 — Build for production</h3>
+          <pre>npm run build
+npm start</pre>
+          <div class="tip"><strong>PWA Note:</strong> The service worker and offline capabilities are only active in production build. Run <code>npm run build && npm start</code> to test PWA features.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: USING THE APP -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div>
+          <h2>Using the App</h2>
+          <p>Quick start guide for your workout tracker</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>Importing a workout program</h3>
+          <ul>
+            <li>Tap the <strong>+ Import</strong> button in the bottom navigation</li>
+            <li><strong>URL import:</strong> Paste any <span class="tag">muscleandstrength.com/workouts/...</span> URL and tap Import</li>
+            <li><strong>PDF import:</strong> Download a workout PDF from muscleandstrength.com, then upload it</li>
+            <li>Review and edit the imported exercises — add YouTube video links per exercise!</li>
+            <li>Save the program</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>Scheduling a program</h3>
+          <ul>
+            <li>Go to <strong>Workouts</strong> → tap on your program</li>
+            <li>Choose a start date</li>
+            <li>Toggle <strong>Sync to Google Calendar</strong> if you want calendar events created</li>
+            <li>Tap <strong>Start Program</strong> — workout sessions will be auto-created!</li>
+          </ul>
+          <div class="note"><strong>Calendar conflicts:</strong> If you have existing calendar events on workout days, the app will warn you. You can adjust the start date to avoid conflicts.</div>
+        </div>
+        <div class="substep">
+          <h3>Tracking a workout</h3>
+          <ul>
+            <li>On the <strong>Home</strong> screen, you'll see today's workout</li>
+            <li>Tap any exercise card to expand it and see all sets</li>
+            <li>Check off each set as you complete it</li>
+            <li>Tap the YouTube icon 🎬 to watch a guide video for any exercise</li>
+            <li>Once all sets are done, the <strong>Complete Workout</strong> button activates — tap it!</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>Adding YouTube video links</h3>
+          <ul>
+            <li>When importing, fill in the <strong>YouTube guide URL</strong> field for each exercise</li>
+            <li>Example: <span class="tag">https://www.youtube.com/watch?v=...</span></li>
+            <li>The app extracts the video ID and shows a clickable link during your workout</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: DEPLOY -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <div>
+          <h2>Deploy to Production</h2>
+          <p>Host your app and install it as a PWA</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="substep">
+          <h3>Deploy to Vercel (recommended)</h3>
+          <ul>
+            <li>Push your code to GitHub</li>
+            <li>Go to <a href="https://vercel.com" target="_blank">vercel.com</a> → Import Project</li>
+            <li>Add environment variables: <span class="tag">NEXT_PUBLIC_SUPABASE_URL</span> and <span class="tag">NEXT_PUBLIC_SUPABASE_ANON_KEY</span></li>
+            <li>Deploy!</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>Update Supabase redirect URLs</h3>
+          <ul>
+            <li>In Supabase → Authentication → URL Configuration</li>
+            <li>Add your Vercel URL as both Site URL and redirect URL</li>
+            <li>In Google Cloud Console, add the Vercel URL to authorized origins and redirect URIs</li>
+          </ul>
+        </div>
+        <div class="substep">
+          <h3>Install as PWA on your phone</h3>
+          <ul>
+            <li><strong>iPhone (Safari):</strong> Open app URL → tap Share → "Add to Home Screen"</li>
+            <li><strong>Android (Chrome):</strong> Open app URL → tap menu → "Add to Home Screen" or "Install App"</li>
+            <li>The app works offline for already-loaded sessions!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <div class="final">
+    <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+    <h2>You're all set!</h2>
+    <p>Start your first workout program and crush your goals.</p>
+    <div class="url-box">http://localhost:3000</div>
+    <p style="margin-top:20px;font-size:13px;color:var(--muted);">Questions? Check the README or the Supabase docs at <a href="https://supabase.com/docs">supabase.com/docs</a></p>
+  </div>
+
+</div>
+</body>
+</html>
