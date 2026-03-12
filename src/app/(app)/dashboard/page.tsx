@@ -31,12 +31,21 @@ export default async function DashboardPage() {
     .eq('scheduled_date', today)
     .single()
 
-  // Get recent sessions for streak
+  // Get sessions for the current calendar week (Mon–Sun) for the streak widget
+  const todayDate = new Date()
+  const dayOfWeek = todayDate.getDay() // 0=Sun, 1=Mon, ...
+  const monday = new Date(todayDate)
+  monday.setDate(todayDate.getDate() - ((dayOfWeek + 6) % 7))
+  monday.setHours(0, 0, 0, 0)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
   const { data: recentSessions } = await supabase
     .from('workout_sessions')
     .select('scheduled_date, completed')
     .eq('user_id', user!.id)
-    .gte('scheduled_date', toDateString(new Date(Date.now() - 7 * 86400000)))
+    .gte('scheduled_date', toDateString(monday))
+    .lte('scheduled_date', toDateString(sunday))
     .order('scheduled_date', { ascending: false })
 
   const firstName = (user!.user_metadata?.full_name as string)?.split(' ')[0] ?? 'there'
