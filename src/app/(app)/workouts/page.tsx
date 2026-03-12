@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { PlusCircle, BookOpen, Calendar, Dumbbell } from 'lucide-react'
+import { DeleteProgramButton } from '@/components/workout/DeleteProgramButton'
 
 export default async function WorkoutsPage() {
   const supabase = await createClient()
@@ -55,23 +56,28 @@ export default async function WorkoutsPage() {
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">All Programs</p>
           <div className="space-y-2">
             {programs.map((program: any) => (
-              <Link key={program.id} href={`/workouts/${program.id}`} className="block bg-[#13131f] border border-[#1e2035] rounded-2xl p-4 card-hover">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#1a1a2e] flex items-center justify-center flex-shrink-0">
-                    <Dumbbell className="w-5 h-5 text-slate-400" />
+              <div key={program.id} className="relative flex items-stretch bg-[#13131f] border border-[#1e2035] rounded-2xl overflow-hidden card-hover">
+                <Link href={`/workouts/${program.id}`} className="flex-1 p-4 min-w-0">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#1a1a2e] flex items-center justify-center flex-shrink-0">
+                      <Dumbbell className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-100 text-sm leading-tight">{program.title}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {program.workout_days?.length ?? 0} days · {program.duration_weeks ?? '?'}wk · {program.level ?? 'Any level'}
+                      </p>
+                      {program.description && (
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">{program.description}</p>
+                      )}
+                    </div>
+                    <BookOpen className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-100 text-sm leading-tight">{program.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {program.workout_days?.length ?? 0} days · {program.duration_weeks ?? '?'}wk · {program.level ?? 'Any level'}
-                    </p>
-                    {program.description && (
-                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{program.description}</p>
-                    )}
-                  </div>
-                  <BookOpen className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
+                </Link>
+                <div className="flex items-center pr-3">
+                  <DeleteProgramButton programId={program.id} />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

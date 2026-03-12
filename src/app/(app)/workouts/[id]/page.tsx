@@ -26,6 +26,12 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
     .eq('active', true)
     .maybeSingle()
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('google_calendar_connected')
+    .eq('id', user.id)
+    .single()
+
   const days = program.workout_days ?? []
 
   return (
@@ -65,7 +71,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
         programId={program.id}
         activePlan={activePlan}
         durationWeeks={program.duration_weeks ?? 8}
-        calendarConnected={false}
+        calendarConnected={profile?.google_calendar_connected ?? false}
       />
 
       {/* Days accordion */}

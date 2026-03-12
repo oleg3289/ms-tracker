@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         colorId: '6', // tangerine/orange
         reminders: {
           useDefault: false,
-          overrides: [{ method: 'notification', minutes: 60 }],
+          overrides: [{ method: 'popup', minutes: 60 }],
         },
       }
 

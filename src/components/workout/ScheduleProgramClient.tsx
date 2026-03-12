@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { CalendarDays, Loader2, CheckCircle2, AlertTriangle, CalendarPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { addDays, toDateString } from '@/lib/utils'
 import type { WorkoutPlan } from '@/types/database'
@@ -20,20 +20,70 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [conflict, setConflict] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncDone, setSyncDone] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const handleCalendarSync = async (planId: string) => {
+    setSyncing(true)
+    setConflict(null)
+    try {
+      const calRes = await fetch('/api/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      })
+      if (!calRes.ok) {
+        const d = await calRes.json()
+        setConflict(d.error ?? 'Calendar sync failed')
+      } else {
+        setSyncDone(true)
+      }
+    } catch {
+      setConflict('Calendar sync failed — check your connection and try again.')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   if (activePlan) {
     const end = activePlan.end_date ? new Date(activePlan.end_date).toLocaleDateString() : '–'
     return (
-      <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex items-start gap-3">
-        <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-green-400">Program is active</p>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Started {new Date(activePlan.start_date).toLocaleDateString()} · Ends {end}
-          </p>
+      <div className="space-y-2">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-green-400">Program is active</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Started {new Date(activePlan.start_date).toLocaleDateString()} · Ends {end}
+            </p>
+          </div>
         </div>
+        {/* Calendar sync for already-active plans */}
+        {calendarConnected && !syncDone && (
+          <button
+            onClick={() => handleCalendarSync(activePlan.id)}
+            disabled={syncing}
+            className="w-full flex items-center justify-center gap-2 bg-[#13131f] border border-[#1e2035] hover:border-orange-500/30 text-slate-400 hover:text-slate-200 text-sm py-2.5 rounded-xl transition-colors"
+          >
+            {syncing
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing to Google Calendar…</>
+              : <><CalendarPlus className="w-4 h-4 text-orange-400" /> Sync workouts to Google Calendar</>
+            }
+          </button>
+        )}
+        {syncDone && (
+          <div className="flex items-center gap-2 text-xs text-green-400 px-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Synced to Google Calendar
+          </div>
+        )}
+        {conflict && (
+          <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+            <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-400">{conflict}</p>
+          </div>
+        )}
       </div>
     )
   }
