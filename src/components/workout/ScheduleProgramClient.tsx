@@ -42,6 +42,7 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
   const [conflict, setConflict] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncDone, setSyncDone] = useState(false)
+  const [reminderMinutes, setReminderMinutes] = useState(60)
 
   // Mid-program state
   const [midProgram, setMidProgram] = useState(false)
@@ -58,7 +59,7 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
       const calRes = await fetch('/api/calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, reminderMinutes }),
       })
       if (!calRes.ok) {
         const d = await calRes.json()
@@ -197,7 +198,7 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
         const calRes = await fetch('/api/calendar/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: plan.id }),
+          body: JSON.stringify({ planId: plan.id, reminderMinutes }),
         })
         if (!calRes.ok) {
           setConflict('Calendar sync failed — workouts are saved but not in your calendar yet.')
@@ -340,17 +341,48 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
         )}
       </div>
 
-      {/* Google Calendar toggle */}
-      <label className="flex items-center gap-3 cursor-pointer">
-        <div onClick={() => setSyncCalendar(s => !s)}
-          className={`w-10 h-6 rounded-full transition-colors ${syncCalendar ? 'bg-orange-500' : 'bg-[#2a2a45]'} flex items-center px-1`}>
-          <div className={`w-4 h-4 rounded-full bg-white transition-transform ${syncCalendar ? 'translate-x-4' : 'translate-x-0'}`} />
-        </div>
-        <span className="text-sm text-slate-400">Sync to Google Calendar</span>
-        {!calendarConnected && (
-          <span className="text-[10px] text-slate-600">(connect in Settings)</span>
+      {/* Google Calendar toggle + reminder picker */}
+      <div className="space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div onClick={() => setSyncCalendar(s => !s)}
+            className={`w-10 h-6 rounded-full transition-colors ${syncCalendar ? 'bg-orange-500' : 'bg-[#2a2a45]'} flex items-center px-1`}>
+            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${syncCalendar ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+          <span className="text-sm text-slate-400">Sync to Google Calendar</span>
+          {!calendarConnected && (
+            <span className="text-[10px] text-slate-600">(connect in Settings)</span>
+          )}
+        </label>
+
+        {syncCalendar && (
+          <div className="space-y-1.5 pl-1">
+            <p className="text-xs text-slate-500">Remind me before each workout</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'None', value: 0 },
+                { label: '15 min', value: 15 },
+                { label: '30 min', value: 30 },
+                { label: '1 hour', value: 60 },
+                { label: '2 hours', value: 120 },
+                { label: '1 day', value: 1440 },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setReminderMinutes(opt.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    reminderMinutes === opt.value
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-[#0d0d1a] border border-[#1e2035] text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
-      </label>
+      </div>
 
       {conflict && (
         <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">

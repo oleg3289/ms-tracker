@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { planId } = await req.json()
+    const { planId, reminderMinutes } = await req.json()
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -65,7 +65,9 @@ export async function POST(req: NextRequest) {
         colorId: '6', // tangerine / orange
         reminders: {
           useDefault: false,
-          overrides: [{ method: 'popup', minutes: 60 }],
+          overrides: reminderMinutes > 0
+            ? [{ method: 'popup', minutes: reminderMinutes }]
+            : [],
         },
       }
 
