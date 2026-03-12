@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { SwUpdater } from '@/components/SwUpdater'
 
 export const metadata: Metadata = {
   title: 'WorkoutTracker',
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-screen bg-[#0a0a0f] text-slate-100 antialiased">
+        <SwUpdater />
         {children}
       </body>
     </html>

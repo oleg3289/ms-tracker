@@ -5,6 +5,11 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    // Take over immediately without waiting for all tabs to close.
+    // This ensures the fixed SW (with NetworkOnly for /api/*) activates
+    // as soon as the new version is detected instead of waiting indefinitely.
+    skipWaiting: true,
+    clientsClaim: true,
     // Always go to the network for API routes — never let the SW cache or
     // intercept them. Without this, POST requests (e.g. /api/parse-pdf) can
     // silently fail on mobile PWA because Workbox tries to handle them.
