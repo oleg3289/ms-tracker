@@ -24,6 +24,7 @@ export function ImportClient() {
   const [tab, setTab] = useState<Tab>('url')
   const [url, setUrl] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [dragging, setDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [program, setProgram] = useState<ProgramInput | null>(null)
@@ -31,6 +32,13 @@ export function ImportClient() {
   const [saving, setSaving] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    setDragging(false)
+    const dropped = e.dataTransfer.files?.[0]
+    if (dropped?.type === 'application/pdf') setFile(dropped)
+  }
 
   const handleScrape = async () => {
     if (!url.trim()) return
@@ -191,12 +199,20 @@ export function ImportClient() {
           {tab === 'pdf' && (
             <div className="bg-[#13131f] border border-[#1e2035] rounded-2xl p-4 space-y-3">
               <p className="text-sm text-slate-400">Upload a workout PDF downloaded from muscleandstrength.com</p>
-              <label className={cn(
-                'flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 cursor-pointer transition-colors',
-                file ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#2a2a45] hover:border-[#3a3a55]'
-              )}>
-                <Upload className={cn('w-8 h-8 mb-2', file ? 'text-orange-400' : 'text-slate-600')} />
-                <p className="text-sm font-medium text-slate-300">{file ? file.name : 'Tap to upload PDF'}</p>
+              <label
+                className={cn(
+                  'flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 cursor-pointer transition-colors',
+                  dragging ? 'border-orange-500 bg-orange-500/10' :
+                  file ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#2a2a45] hover:border-[#3a3a55]'
+                )}
+                onDragOver={e => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+              >
+                <Upload className={cn('w-8 h-8 mb-2', dragging ? 'text-orange-400' : file ? 'text-orange-400' : 'text-slate-600')} />
+                <p className="text-sm font-medium text-slate-300">
+                  {dragging ? 'Drop PDF here' : file ? file.name : 'Tap or drag & drop PDF'}
+                </p>
                 <p className="text-xs text-slate-600 mt-1">{file ? `${(file.size / 1024).toFixed(0)} KB` : 'PDF files only'}</p>
                 <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
               </label>
