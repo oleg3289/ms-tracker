@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Link2, Upload, Loader2, CheckCircle2, AlertCircle, Youtube, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Link2, Upload, Loader2, CheckCircle2, AlertCircle, ExternalLink, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
@@ -310,9 +310,9 @@ export function ImportClient() {
                           ))}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Youtube className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                           <input value={ex.youtube_url} onChange={e => updateExercise(di, ei, 'youtube_url', e.target.value)}
-                            className="flex-1 bg-transparent text-xs text-slate-500 placeholder:text-slate-700 focus:outline-none" placeholder="YouTube guide URL (optional)" />
+                            className="flex-1 bg-transparent text-xs text-slate-500 placeholder:text-slate-700 focus:outline-none" placeholder="Guide URL (optional)" />
                         </div>
                       </div>
                     ))}
