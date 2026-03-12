@@ -14,8 +14,25 @@ interface Props {
   calendarConnected: boolean
 }
 
+const DAYS = [
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+  { label: 'Sun', value: 0 },
+]
+
+function nextOccurrence(targetDay: number): string {
+  const today = new Date()
+  const diff = (targetDay - today.getDay() + 7) % 7
+  return toDateString(addDays(today, diff)) // diff=0 means start today
+}
+
 export function ScheduleProgramClient({ programId, activePlan, durationWeeks, calendarConnected }: Props) {
-  const [startDate, setStartDate] = useState(toDateString(new Date()))
+  const [selectedDay, setSelectedDay] = useState(1) // default Monday
+  const [startDate, setStartDate] = useState(() => nextOccurrence(1))
   const [syncCalendar, setSyncCalendar] = useState(calendarConnected)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -184,14 +201,35 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
         <CalendarDays className="w-4 h-4 text-orange-400" /> Schedule This Program
       </p>
 
-      <div>
-        <label className="text-xs text-slate-500 mb-1.5 block">Start Date</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={e => setStartDate(e.target.value)}
-          className="w-full bg-[#0d0d1a] border border-[#1e2035] rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
-        />
+      <div className="space-y-2">
+        <label className="text-xs text-slate-500 block">Start on</label>
+        <div className="grid grid-cols-7 gap-1">
+          {DAYS.map(d => (
+            <button
+              key={d.value}
+              type="button"
+              onClick={() => {
+                setSelectedDay(d.value)
+                setStartDate(nextOccurrence(d.value))
+              }}
+              className={`py-2 rounded-xl text-xs font-semibold transition-colors ${
+                selectedDay === d.value
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-[#0d0d1a] text-slate-500 hover:text-slate-300 border border-[#1e2035]'
+              }`}
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-slate-500">
+          Starting{' '}
+          <span className="text-slate-300 font-medium">
+            {new Date(startDate + 'T00:00:00').toLocaleDateString(undefined, {
+              weekday: 'long', month: 'short', day: 'numeric'
+            })}
+          </span>
+        </p>
       </div>
 
       <label className="flex items-center gap-3 cursor-pointer">
