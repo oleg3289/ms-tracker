@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 
+export const maxDuration = 60 // seconds (Vercel Hobby max)
+
 export async function POST(req: NextRequest) {
   try {
     const { url } = await req.json()

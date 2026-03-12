@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const maxDuration = 60 // seconds
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
@@ -11,8 +13,9 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Dynamic import to avoid build-time issues
-    const pdfParse = (await import('pdf-parse')).default
+    // Use lib entry point directly to avoid Vercel serverless issue
+    // where pdf-parse/index.js tries to read ./test/data/* relative to process.cwd()
+    const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default
     const data = await pdfParse(buffer)
     const text = data.text
 

@@ -8,12 +8,13 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) notFound()
 
   const { data: program } = await supabase
     .from('workout_programs')
     .select(`*, workout_days(*, exercises(*))`)
     .eq('id', id)
-    .eq('user_id', user!.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!program) notFound()
@@ -23,7 +24,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
     .select('*')
     .eq('program_id', id)
     .eq('active', true)
-    .single()
+    .maybeSingle()
 
   const days = program.workout_days ?? []
 
