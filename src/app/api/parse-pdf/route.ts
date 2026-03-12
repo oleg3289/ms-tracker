@@ -35,18 +35,22 @@ function parseReps(s: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File | null
+    // Accept raw binary body (Content-Type: application/pdf).
+    // This is more reliable than multipart/FormData on mobile browsers and
+    // cellular networks where carrier proxies can corrupt multipart bodies.
+    const contentType = req.headers.get('content-type') ?? ''
+    const filename = req.headers.get('x-filename') ?? ''
 
     const isPdf =
-      file?.type === 'application/pdf' ||
-      file?.type === 'application/octet-stream' || // iOS sometimes reports this
-      file?.name?.toLowerCase().endsWith('.pdf')
-    if (!file || !isPdf) {
+      contentType.includes('application/pdf') ||
+      contentType.includes('application/octet-stream') ||
+      decodeURIComponent(filename).toLowerCase().endsWith('.pdf')
+
+    if (!isPdf) {
       return NextResponse.json({ error: 'Please upload a valid PDF file' }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
+    const buffer = Buffer.from(await req.arrayBuffer())
 
     // Use lib entry point directly to avoid Vercel serverless issue
     // where pdf-parse/index.js tries to read ./test/data/* relative to process.cwd()

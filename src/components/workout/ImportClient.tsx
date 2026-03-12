@@ -63,9 +63,24 @@ export function ImportClient() {
     if (!file) return
     setLoading(true); setError(null)
     try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch('/api/parse-pdf', { method: 'POST', body: form })
+      // Read file to ArrayBuffer first — this surfaces "file not accessible"
+      // errors (e.g. iCloud file not downloaded) before the fetch even starts,
+      // and avoids multipart/FormData issues on mobile browsers / cellular proxies.
+      let buffer: ArrayBuffer
+      try {
+        buffer = await file.arrayBuffer()
+      } catch {
+        throw new Error('Could not read the file. Make sure it is downloaded locally and try again.')
+      }
+
+      const res = await fetch('/api/parse-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'X-Filename': encodeURIComponent(file.name),
+        },
+        body: buffer,
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to parse PDF')
       setProgram(data)
