@@ -41,15 +41,23 @@ export function WeekStreak({ sessions }: Props) {
                   ? 'bg-orange-500'
                   : session && !session.completed && isPast
                     ? 'bg-[#1e2035] border border-red-500/30'
-                    : session
-                      ? isToday ? 'bg-orange-500/20 border border-orange-500/40' : 'bg-[#1e2035]'
-                      : 'bg-[#0d0d1a]'
+                    : session && isToday
+                      ? 'bg-orange-500/20 border border-orange-500/40'
+                      : session
+                        ? 'bg-orange-500/10 border border-orange-500/20'
+                        : 'bg-[#0d0d1a]'
               )}
             >
               {session?.completed && <span className="text-white text-xs">✓</span>}
-              {isToday && !session?.completed && <span className="text-orange-400 text-xs">•</span>}
+              {session && !session.completed && isToday && <span className="text-orange-400 text-xs">•</span>}
+              {session && !session.completed && !isToday && !isPast && <span className="text-orange-400/50 text-xs">·</span>}
             </div>
-            <span className={cn('text-[10px]', isToday ? 'text-orange-400 font-semibold' : 'text-slate-600')}>
+            <span className={cn(
+              'text-[10px]',
+              isToday ? 'text-orange-400 font-semibold'
+              : session && !session.completed && !isPast ? 'text-orange-400/60'
+              : 'text-slate-600'
+            )}>
               {label}
             </span>
           </div>
