@@ -154,22 +154,37 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
 
       if (programDays && programDays.length > 0) {
         const sessions = []
-        // Start cycling from the chosen day index (0 for normal start, or mid-program offset)
         let dayIdx = midProgram ? startDayIndex : 0
 
-        for (let d = 0; d < remainingWeeks * 7; d++) {
-          const sessionDate = addDays(start, d)
-          const dayOfWeek = sessionDate.getDay()
-          // Skip weekends
-          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        // Place exactly daysPerWeek workouts per 7-day cycle using a
+        // split pattern that respects built-in rest days (e.g. PHUL 2+2).
+        // Offsets are calendar-day positions within each 7-day block:
+        //   2 days → [0, 1]
+        //   3 days → [0, 1, 3]          (2+1 with a gap)
+        //   4 days → [0, 1, 4, 5]       (2+2 with 2-day gap)  ← PHUL
+        //   5 days → [0, 1, 2, 4, 5]    (3+2 with 1-day gap)
+        //   6 days → [0, 1, 2, 3, 4, 5] (consecutive)
+        const n = programDays.length
+        const offsetMap: Record<number, number[]> = {
+          1: [0],
+          2: [0, 1],
+          3: [0, 1, 3],
+          4: [0, 1, 4, 5],
+          5: [0, 1, 2, 4, 5],
+          6: [0, 1, 2, 3, 4, 5],
+        }
+        const offsets = offsetMap[n] ?? Array.from({ length: Math.min(n, 7) }, (_, i) => i)
+
+        for (let week = 0; week < remainingWeeks; week++) {
+          for (const offset of offsets) {
             sessions.push({
               plan_id: plan.id,
               day_id: programDays[dayIdx].id,
               user_id: user.id,
-              scheduled_date: toDateString(sessionDate),
+              scheduled_date: toDateString(addDays(start, week * 7 + offset)),
               completed: false,
             })
-            dayIdx = (dayIdx + 1) % programDays.length
+            dayIdx = (dayIdx + 1) % n
           }
         }
 
