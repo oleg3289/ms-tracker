@@ -72,6 +72,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
         activePlan={activePlan}
         durationWeeks={program.duration_weeks ?? 8}
         calendarConnected={profile?.google_calendar_connected ?? false}
+        days={days.sort((a, b) => a.day_number - b.day_number).map(d => ({ id: d.id, label: d.label, day_number: d.day_number }))}
       />
 
       {/* Days accordion */}

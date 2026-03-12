@@ -2,19 +2,22 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Loader2, CheckCircle2, AlertTriangle, CalendarPlus } from 'lucide-react'
+import { CalendarDays, Loader2, CheckCircle2, AlertTriangle, CalendarPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { addDays, toDateString } from '@/lib/utils'
 import type { WorkoutPlan } from '@/types/database'
+
+interface DayMeta { id: string; label: string | null; day_number: number }
 
 interface Props {
   programId: string
   activePlan: WorkoutPlan | null
   durationWeeks: number
   calendarConnected: boolean
+  days: DayMeta[]
 }
 
-const DAYS = [
+const DAYS_OF_WEEK = [
   { label: 'Mon', value: 1 },
   { label: 'Tue', value: 2 },
   { label: 'Wed', value: 3 },
@@ -27,11 +30,11 @@ const DAYS = [
 function nextOccurrence(targetDay: number): string {
   const today = new Date()
   const diff = (targetDay - today.getDay() + 7) % 7
-  return toDateString(addDays(today, diff)) // diff=0 means start today
+  return toDateString(addDays(today, diff))
 }
 
-export function ScheduleProgramClient({ programId, activePlan, durationWeeks, calendarConnected }: Props) {
-  const [selectedDay, setSelectedDay] = useState(1) // default Monday
+export function ScheduleProgramClient({ programId, activePlan, durationWeeks, calendarConnected, days }: Props) {
+  const [selectedDay, setSelectedDay] = useState(1)
   const [startDate, setStartDate] = useState(() => nextOccurrence(1))
   const [syncCalendar, setSyncCalendar] = useState(calendarConnected)
   const [loading, setLoading] = useState(false)
@@ -39,6 +42,12 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
   const [conflict, setConflict] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncDone, setSyncDone] = useState(false)
+
+  // Mid-program state
+  const [midProgram, setMidProgram] = useState(false)
+  const [startWeek, setStartWeek] = useState(1)
+  const [startDayIndex, setStartDayIndex] = useState(0) // 0-based index into days[]
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -77,7 +86,6 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
             </p>
           </div>
         </div>
-        {/* Calendar sync for already-active plans */}
         {calendarConnected && !syncDone && (
           <button
             onClick={() => handleCalendarSync(activePlan.id)}
@@ -112,9 +120,15 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
       if (!user) throw new Error('Not authenticated')
 
       const start = new Date(startDate)
-      const endDate = toDateString(addDays(start, durationWeeks * 7))
 
-      // Deactivate any existing active plans first (only one can be active at a time)
+      // How many calendar weeks remain from the chosen start point
+      const remainingWeeks = midProgram
+        ? durationWeeks - startWeek + 1
+        : durationWeeks
+
+      const endDate = toDateString(addDays(start, remainingWeeks * 7))
+
+      // Deactivate any existing active plans
       await supabase
         .from('workout_plans')
         .update({ active: false })
@@ -131,40 +145,39 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
       }).select().single()
       if (pe) throw pe
 
-      // Create workout sessions
-      const { data: days } = await supabase
+      // Fetch days in order
+      const { data: programDays } = await supabase
         .from('workout_days')
         .select('*')
         .eq('program_id', programId)
         .order('day_number')
 
-      if (days && days.length > 0) {
+      if (programDays && programDays.length > 0) {
         const sessions = []
-        let dayIdx = 0
-        for (let d = 0; d < durationWeeks * 7; d++) {
+        // Start cycling from the chosen day index (0 for normal start, or mid-program offset)
+        let dayIdx = midProgram ? startDayIndex : 0
+
+        for (let d = 0; d < remainingWeeks * 7; d++) {
           const sessionDate = addDays(start, d)
-          // Simple round-robin: assign days sequentially, skip rest
-          if (dayIdx < days.length) {
-            const dayOfWeek = sessionDate.getDay()
-            // Skip weekends for rest (simple heuristic)
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-              sessions.push({
-                plan_id: plan.id,
-                day_id: days[dayIdx].id,
-                user_id: user.id,
-                scheduled_date: toDateString(sessionDate),
-                completed: false,
-              })
-              dayIdx = (dayIdx + 1) % days.length
-            }
+          const dayOfWeek = sessionDate.getDay()
+          // Skip weekends
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            sessions.push({
+              plan_id: plan.id,
+              day_id: programDays[dayIdx].id,
+              user_id: user.id,
+              scheduled_date: toDateString(sessionDate),
+              completed: false,
+            })
+            dayIdx = (dayIdx + 1) % programDays.length
           }
         }
+
         if (sessions.length > 0) {
           await supabase.from('workout_sessions').insert(sessions)
         }
       }
 
-      // Sync to Google Calendar if requested
       if (syncCalendar) {
         const calRes = await fetch('/api/calendar/sync', {
           method: 'POST',
@@ -195,16 +208,19 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
     )
   }
 
+  const currentDayLabel = days[startDayIndex]?.label ?? `Day ${startDayIndex + 1}`
+
   return (
     <div className="bg-[#13131f] border border-[#1e2035] rounded-2xl p-4 space-y-4">
       <p className="text-sm font-semibold text-slate-200 flex items-center gap-2">
         <CalendarDays className="w-4 h-4 text-orange-400" /> Schedule This Program
       </p>
 
+      {/* Start day of week */}
       <div className="space-y-2">
-        <label className="text-xs text-slate-500 block">Start on</label>
+        <label className="text-xs text-slate-500 block">First workout day</label>
         <div className="grid grid-cols-7 gap-1">
-          {DAYS.map(d => (
+          {DAYS_OF_WEEK.map(d => (
             <button
               key={d.value}
               type="button"
@@ -226,12 +242,90 @@ export function ScheduleProgramClient({ programId, activePlan, durationWeeks, ca
           Starting{' '}
           <span className="text-slate-300 font-medium">
             {new Date(startDate + 'T00:00:00').toLocaleDateString(undefined, {
-              weekday: 'long', month: 'short', day: 'numeric'
+              weekday: 'long', month: 'short', day: 'numeric',
             })}
           </span>
         </p>
       </div>
 
+      {/* Mid-program toggle */}
+      <div className="border border-[#1e2035] rounded-xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setMidProgram(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+        >
+          <span>Already started this program?</span>
+          {midProgram
+            ? <ChevronUp className="w-4 h-4 text-orange-400" />
+            : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {midProgram && (
+          <div className="px-4 pb-4 space-y-4 border-t border-[#1e2035] pt-3">
+            <p className="text-xs text-slate-500">Pick up where you left off — only the remaining sessions will be scheduled.</p>
+
+            {/* Week picker */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-500 block">Current week</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStartWeek(w => Math.max(1, w - 1))}
+                  className="w-9 h-9 rounded-xl bg-[#0d0d1a] border border-[#1e2035] text-slate-400 hover:text-white text-lg leading-none flex items-center justify-center transition-colors"
+                >−</button>
+                <div className="flex-1 text-center">
+                  <span className="text-2xl font-bold text-slate-100">{startWeek}</span>
+                  <span className="text-xs text-slate-500 ml-1">/ {durationWeeks}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStartWeek(w => Math.min(durationWeeks, w + 1))}
+                  className="w-9 h-9 rounded-xl bg-[#0d0d1a] border border-[#1e2035] text-slate-400 hover:text-white text-lg leading-none flex items-center justify-center transition-colors"
+                >+</button>
+              </div>
+            </div>
+
+            {/* Day picker */}
+            {days.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs text-slate-500 block">Next workout</label>
+                <div className="space-y-1.5">
+                  {days.map((d, i) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setStartDayIndex(i)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left ${
+                        startDayIndex === i
+                          ? 'bg-orange-500/15 border border-orange-500/40 text-orange-300'
+                          : 'bg-[#0d0d1a] border border-[#1e2035] text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                        startDayIndex === i ? 'bg-orange-500/30 text-orange-300' : 'bg-[#1a1a2e] text-slate-500'
+                      }`}>
+                        {i + 1}
+                      </span>
+                      <span className="truncate">{d.label ?? `Day ${i + 1}`}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="bg-[#0d0d1a] rounded-xl px-3 py-2.5 text-xs text-slate-500">
+              Scheduling from <span className="text-slate-300 font-medium">Week {startWeek} · {currentDayLabel}</span>
+              {' '}— <span className="text-slate-300 font-medium">
+                {(durationWeeks - startWeek) * days.length + (days.length - startDayIndex)} sessions
+              </span> remaining
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Google Calendar toggle */}
       <label className="flex items-center gap-3 cursor-pointer">
         <div onClick={() => setSyncCalendar(s => !s)}
           className={`w-10 h-6 rounded-full transition-colors ${syncCalendar ? 'bg-orange-500' : 'bg-[#2a2a45]'} flex items-center px-1`}>
