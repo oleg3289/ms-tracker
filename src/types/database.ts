@@ -4,6 +4,9 @@ export interface Profile {
   full_name: string | null
   avatar_url: string | null
   google_calendar_connected: boolean
+  google_access_token: string | null
+  google_refresh_token: string | null
+  google_token_expiry: number | null
   created_at: string
 }
 
